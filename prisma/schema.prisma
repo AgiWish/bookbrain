@@ -1,0 +1,65 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model Bookmark {
+  id             String    @id @default(cuid())
+  url            String    @unique
+  title          String
+  description    String?
+  faviconUrl     String?
+  folder         String?
+  source         String    @default("chrome") // "chrome" | "tabbit"
+  addDate        DateTime?
+  importedAt     DateTime  @default(now())
+  aiProcessedAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  tags      BookmarkTag[]
+  embedding BookmarkEmbedding?
+
+  @@map("bookmarks")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String   @default("#4F8EF7")
+  createdBy String   @default("ai") // "ai" | "user"
+  createdAt DateTime @default(now())
+
+  bookmarks BookmarkTag[]
+
+  @@map("tags")
+}
+
+model BookmarkTag {
+  bookmarkId String
+  tagId      String
+
+  bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([bookmarkId, tagId])
+  @@map("bookmark_tags")
+}
+
+model BookmarkEmbedding {
+  id         String                      @id @default(cuid())
+  bookmarkId String                      @unique
+  embedding  Unsupported("vector(1536)")?
+  createdAt  DateTime                    @default(now())
+  updatedAt  DateTime                    @updatedAt
+
+  bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+
+  @@map("bookmark_embeddings")
+}
