@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import Image from "next/image";
+import React, { useState } from "react";
 
 interface BookmarkCardProps {
   bookmark: {
@@ -11,73 +10,139 @@ interface BookmarkCardProps {
     summary?: string;
     tags: string[];
     processed: boolean;
+    pinned?: boolean;
     favicon?: string;
+    category?: string;
+    subfolder?: string;
   };
   onClick: (id: string) => void;
+  onTogglePin?: (id: string) => void;
 }
 
-export default function BookmarkCard({ bookmark, onClick }: BookmarkCardProps) {
-  const domain = new URL(bookmark.url).hostname;
+function getDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace("www.", "");
+  } catch {
+    return url;
+  }
+}
+
+function getFaviconUrl(url: string): string | null {
+  try {
+    const { origin } = new URL(url);
+    return `${origin}/favicon.ico`;
+  } catch {
+    return null;
+  }
+}
+
+function domainColor(domain: string): string {
+  const colors = [
+    "#2f96d4", "#8B6CF7", "#34D399", "#F59E0B", "#EF4444",
+    "#EC4899", "#06B6D4", "#84CC16", "#F97316", "#6366F1",
+  ];
+  let hash = 0;
+  for (let i = 0; i < domain.length; i++) {
+    hash = ((hash << 5) - hash + domain.charCodeAt(i)) | 0;
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function FaviconImage({ src, domain, alt, color }: { src: string; domain: string; alt: string; color: string }) {
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [allFailed, setAllFailed] = useState(false);
+
+  const handleError = () => {
+    // Try DuckDuckGo as fallback
+    if (currentSrc.includes('/favicon.ico')) {
+      setCurrentSrc(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
+    } else {
+      setAllFailed(true);
+    }
+  };
+
+  if (allFailed) {
+    return (
+      <div className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white" style={{ backgroundColor: color }}>
+        {alt}
+      </div>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={currentSrc}
+      alt=""
+      width={32}
+      height={32}
+      className="w-8 h-8 object-cover rounded-full"
+      onError={handleError}
+    />
+  );
+}
+
+export default function BookmarkCard({ bookmark, onClick, onTogglePin }: BookmarkCardProps) {
+  const domain = getDomain(bookmark.url);
+  const subtitle = bookmark.subfolder
+    ? `${bookmark.subfolder} · ${domain}`
+    : domain;
+  const initial = domain.charAt(0).toUpperCase();
+  const color = domainColor(domain);
+  // Use stored favicon if available, otherwise generate from URL
+  const faviconSrc = bookmark.favicon || getFaviconUrl(bookmark.url);
 
   return (
     <div
       onClick={() => onClick(bookmark.id)}
-      className="group relative flex flex-col p-4 rounded-xl border border-[#2E3347] transition-all hover:border-[#3D4460] cursor-pointer"
-      style={{ backgroundColor: "#1A1D27" }}
+      className="group relative flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-[#f6fbff]"
     >
-      {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center border border-[#2E3347]" style={{ backgroundColor: "#22263A" }}>
-            {bookmark.favicon ? (
-              <Image 
-                src={bookmark.favicon} 
-                alt="" 
-                width={20} 
-                height={20} 
-                className="w-5 h-5 object-contain" 
-                unoptimized
-              />
-            ) : (
-              <span className="text-xs text-[#9099B5]">🌍</span>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold truncate group-hover:text-[#4F8EF7] transition-colors">
-              {bookmark.title}
-            </h3>
-            <p className="text-[10px] text-[#9099B5] truncate font-mono" style={{ fontFamily: "var(--font-jetbrains-mono)" }}>
-              {domain}
-            </p>
-          </div>
-        </div>
-        
-        {/* Status indicator */}
-        <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${bookmark.processed ? 'bg-[#34D399]' : 'bg-[#F59E0B]'}`} />
-      </div>
-
-      {/* AI Summary */}
-      {bookmark.summary && (
-        <div 
-          className="mb-4 p-3 rounded-lg text-xs leading-relaxed border-l-2 border-[#8B6CF7]" 
-          style={{ backgroundColor: "rgba(139, 92, 246, 0.08)", color: "#E8EAF0" }}
+      {/* Pin button */}
+      {onTogglePin && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onTogglePin(bookmark.id);
+          }}
+          className={`absolute top-2 right-2 p-1 rounded transition-opacity ${
+            bookmark.pinned
+              ? "opacity-100"
+              : "opacity-0 group-hover:opacity-100"
+          }`}
+          title={bookmark.pinned ? "取消收藏" : "收藏"}
         >
-          <span className="inline-block mr-1 text-[#8B6CF7] font-bold">✨ AI:</span>
-          {bookmark.summary}
-        </div>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill={bookmark.pinned ? "#F59E0B" : "none"}
+            stroke={bookmark.pinned ? "#F59E0B" : "#c0c7d5"}
+            strokeWidth="1.3"
+          >
+            <path d="M8 1l2.2 4.5L15 6.3l-3.5 3.4.8 4.9L8 12.4l-4.3 2.2.8-4.9L1 6.3l4.8-.8z"/>
+          </svg>
+        </button>
       )}
 
-      {/* Tags */}
-      <div className="mt-auto flex flex-wrap gap-2">
-        {bookmark.tags.map(tag => (
-          <span 
-            key={tag} 
-            className="px-2 py-0.5 rounded text-[10px] font-medium" 
-            style={{ backgroundColor: "#2A2F45", color: "#9099B5", border: "1px solid #3D4460" }}
-          >
-            {tag}
-          </span>
-        ))}
+      {/* Favicon */}
+      <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden shadow-sm mt-0.5">
+        {faviconSrc ? (
+          <FaviconImage src={faviconSrc} domain={domain} alt={initial} color={color} />
+        ) : (
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white" style={{ backgroundColor: color }}>
+            {initial}
+          </div>
+        )}
+      </div>
+
+      {/* Text */}
+      <div className="flex-1 min-w-0 pr-4">
+        <p className="text-[14px] text-[#1f2937] truncate leading-snug font-medium group-hover:text-[#187dbd] transition-colors">
+          {bookmark.title}
+        </p>
+        <p className="text-[12px] text-[#98a2b3] truncate mt-0.5 leading-relaxed">
+          {subtitle}
+        </p>
       </div>
     </div>
   );

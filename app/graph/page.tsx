@@ -23,6 +23,12 @@ interface GraphData {
   links: GraphLink[];
 }
 
+interface GraphResponse {
+  nodes?: GraphNode[];
+  links?: GraphLink[];
+  edges?: GraphLink[];
+}
+
 export default function GraphPage() {
   const [data, setData] = useState<GraphData>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
@@ -33,8 +39,11 @@ export default function GraphPage() {
   const fetchGraphData = useCallback(async () => {
     try {
       const res = await fetch(`/api/graph?limit=${limit}`);
-      const graphData = await res.json();
-      setData(graphData);
+      const graphData = await res.json() as GraphResponse;
+      setData({
+        nodes: graphData.nodes ?? [],
+        links: graphData.links ?? graphData.edges ?? [],
+      });
     } catch (e) {
       console.error(e);
     } finally {
@@ -43,6 +52,8 @@ export default function GraphPage() {
   }, [limit]);
 
   useEffect(() => {
+    // This client graph loads visualization data after mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchGraphData();
   }, [fetchGraphData]);
 
@@ -55,37 +66,37 @@ export default function GraphPage() {
   const filteredLinks = data.links.filter(link => link.similarity >= threshold);
 
   return (
-    <div className="flex-1 relative overflow-hidden" style={{ backgroundColor: "#0F1117" }}>
+    <div className="flex-1 relative overflow-hidden" style={{ backgroundColor: "#f3f7fc" }}>
       {loading ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4">
-          <div className="w-10 h-10 border-2 border-[#4F8EF7]/30 border-t-[#4F8EF7] rounded-full animate-spin" />
-          <p className="text-xs text-[#9099B5] font-bold tracking-widest uppercase">正在构建知识网络...</p>
+          <div className="w-10 h-10 border-2 border-[#2f96d4]/30 border-t-[#2f96d4] rounded-full animate-spin" />
+          <p className="text-xs text-[#98a2b3] font-bold tracking-widest uppercase">正在构建知识网络...</p>
         </div>
       ) : (
         <>
-          <KnowledgeGraph 
-            data={{ nodes: data.nodes, links: filteredLinks as any }} 
-            onNodeClick={setSelectedId} 
+          <KnowledgeGraph
+            data={{ nodes: data.nodes, links: filteredLinks }}
+            onNodeClick={setSelectedId}
           />
-          
-          <GraphControls 
-            threshold={threshold} 
-            setThreshold={setThreshold} 
-            limit={limit} 
-            setLimit={handleLimitChange} 
+
+          <GraphControls
+            threshold={threshold}
+            setThreshold={setThreshold}
+            limit={limit}
+            setLimit={handleLimitChange}
           />
 
           {/* Legend */}
-          <div className="absolute bottom-6 left-6 p-4 rounded-xl border border-[#2E3347] bg-[#1A1D27]/80 backdrop-blur-md space-y-2">
-            <h4 className="text-[10px] font-bold text-[#9099B5] uppercase mb-2">分类说明</h4>
+          <div className="absolute bottom-6 left-6 p-4 rounded-xl border border-[#e6edf5] bg-white/80 backdrop-blur-md space-y-2">
+            <h4 className="text-[10px] font-bold text-[#98a2b3] uppercase mb-2">分类说明</h4>
             <div className="flex items-center gap-2 text-xs">
-              <span className="w-2 h-2 rounded-full bg-[#4F8EF7]" /> <span className="text-[#E8EAF0]">技术开发</span>
+              <span className="w-2 h-2 rounded-full bg-[#2f96d4]" /> <span className="text-[#1f2937]">技术开发</span>
             </div>
             <div className="flex items-center gap-2 text-xs">
-              <span className="w-2 h-2 rounded-full bg-[#8B6CF7]" /> <span className="text-[#E8EAF0]">人工智能</span>
+              <span className="w-2 h-2 rounded-full bg-[#8B6CF7]" /> <span className="text-[#1f2937]">人工智能</span>
             </div>
             <div className="flex items-center gap-2 text-xs">
-              <span className="w-2 h-2 rounded-full bg-[#34D399]" /> <span className="text-[#E8EAF0]">产品设计</span>
+              <span className="w-2 h-2 rounded-full bg-[#34D399]" /> <span className="text-[#1f2937]">产品设计</span>
             </div>
           </div>
         </>

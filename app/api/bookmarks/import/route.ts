@@ -20,8 +20,10 @@ export async function POST(request: NextRequest) {
           url: b.url,
           title: b.title,
           folder: b.folder,
+          category: b.category,
+          subfolder: b.subfolder,
           source: b.source,
-          addDate: b.addDate,
+          addDate: b.addDate ? new Date(b.addDate as unknown as string) : undefined,
         })),
         skipDuplicates: true,
       })

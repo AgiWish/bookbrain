@@ -58,8 +58,8 @@ export default function KnowledgeGraph({ data, onNodeClick }: KnowledgeGraphProp
 
     // Links
     const link = g.append("g")
-      .attr("stroke", "#3D4460")
-      .attr("stroke-opacity", 0.4)
+      .attr("stroke", "#e6edf5")
+      .attr("stroke-opacity", 0.6)
       .selectAll("line")
       .data(data.links)
       .join("line")
@@ -67,22 +67,22 @@ export default function KnowledgeGraph({ data, onNodeClick }: KnowledgeGraphProp
 
     // Nodes
     const node = g.append("g")
-      .selectAll("circle")
+      .selectAll<SVGCircleElement, GraphNode>("circle")
       .data(data.nodes)
       .join("circle")
       .attr("r", d => 6 + (d.val || 1))
       .attr("fill", d => colorScale(d.tag))
-      .attr("stroke", "#0F1117")
+      .attr("stroke", "#fff")
       .attr("stroke-width", 1.5)
       .style("cursor", "pointer")
       .on("click", (_event, d) => onNodeClick(d.id))
       .on("mouseover", (event, d) => {
         setHoveredNode(d);
-        d3.select(event.currentTarget).attr("stroke", "#4F8EF7").attr("stroke-width", 3);
+        d3.select(event.currentTarget).attr("stroke", "#2f96d4").attr("stroke-width", 3);
       })
       .on("mouseout", (event) => {
         setHoveredNode(null);
-        d3.select(event.currentTarget).attr("stroke", "#0F1117").attr("stroke-width", 1.5);
+        d3.select(event.currentTarget).attr("stroke", "#fff").attr("stroke-width", 1.5);
       })
       .call(d3.drag<SVGCircleElement, GraphNode>()
         .on("start", (event) => {
@@ -123,20 +123,20 @@ export default function KnowledgeGraph({ data, onNodeClick }: KnowledgeGraphProp
   return (
     <div className="relative w-full h-full">
       <svg ref={svgRef} className="w-full h-full" />
-      
+
       {/* Tooltip */}
       {hoveredNode && (
-        <div 
-          className="absolute pointer-events-none p-3 rounded-lg border border-[#2E3347] shadow-xl text-xs max-w-xs animate-in fade-in duration-200"
-          style={{ 
-            backgroundColor: "#1A1D27", 
-            left: "50%", 
-            bottom: "40px", 
-            transform: "translateX(-50%)" 
+        <div
+          className="absolute pointer-events-none p-3 rounded-lg border border-[#e6edf5] shadow-xl text-xs max-w-xs animate-in fade-in duration-200"
+          style={{
+            backgroundColor: "#fff",
+            left: "50%",
+            bottom: "40px",
+            transform: "translateX(-50%)"
           }}
         >
-          <p className="text-white font-bold truncate">{hoveredNode.title}</p>
-          <p className="text-[#9099B5] mt-1">分类: {hoveredNode.tag}</p>
+          <p className="text-[#1f2937] font-bold truncate">{hoveredNode.title}</p>
+          <p className="text-[#98a2b3] mt-1">分类: {hoveredNode.tag}</p>
         </div>
       )}
     </div>

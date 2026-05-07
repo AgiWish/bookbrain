@@ -3,6 +3,8 @@ export interface RawBookmark {
   title: string
   addDate?: Date
   folder?: string
+  category?: string
+  subfolder?: string
   source: 'chrome' | 'tabbit'
 }
 

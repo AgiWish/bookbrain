@@ -25,8 +25,10 @@ export default function SearchBar({ value, onChange, onSearch, placeholder }: Se
 
   return (
     <div className="relative group">
-      <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#9099B5] group-focus-within:text-[#4F8EF7] transition-colors">
-        <span className="text-xl">🔍</span>
+      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#98a2b3] group-focus-within:text-[#2f96d4] transition-colors">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/>
+        </svg>
       </div>
       <input
         ref={inputRef}
@@ -35,9 +37,9 @@ export default function SearchBar({ value, onChange, onSearch, placeholder }: Se
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onSearch()}
         placeholder={placeholder || "搜索书签..."}
-        className="w-full pl-16 pr-24 py-6 bg-[#1A1D27] border border-[#2E3347] rounded-2xl text-lg text-white placeholder-[#9099B5] focus:outline-none focus:border-[#4F8EF7] shadow-xl transition-all"
+        className="w-full pl-14 pr-24 py-5 bg-white border border-[#e6edf5] rounded-xl text-[15px] text-[#1f2937] placeholder-[#98a2b3] focus:outline-none focus:border-[#2f96d4] shadow-sm transition-all"
       />
-      <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1.5 px-2 py-1 rounded border border-[#2E3347] bg-[#0F1117] text-[10px] text-[#9099B5]">
+      <div className="absolute right-5 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1.5 px-2 py-1 rounded border border-[#e6edf5] bg-[#f3f7fc] text-[10px] text-[#98a2b3]">
         <span className="font-sans">⌘</span>
         <span>K</span>
       </div>

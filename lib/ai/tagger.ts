@@ -15,7 +15,7 @@ ${description ? `描述：${description}` : ''}
   const result = await generateText(prompt, undefined, { maxTokens: 150, temperature: 0.1 })
 
   try {
-    const match = result.match(/\[.*?\]/s)
+    const match = result.match(/\[[\s\S]*?\]/)
     if (match) {
       const tags = JSON.parse(match[0]) as string[]
       return tags.slice(0, 5).map((t) => t.trim()).filter(Boolean)

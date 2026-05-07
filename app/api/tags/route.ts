@@ -8,6 +8,6 @@ export async function GET() {
   })
 
   return NextResponse.json(
-    tags.map((t) => ({ ...t, bookmarkCount: t._count.bookmarks }))
+    tags.map((t) => ({ ...t, count: t._count.bookmarks }))
   )
 }

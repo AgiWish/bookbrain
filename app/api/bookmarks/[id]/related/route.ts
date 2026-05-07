@@ -1,29 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db/prisma'
-import { findSimilarBookmarks } from '@/lib/db/vector'
+import { findSimilarBookmarks, getBookmarkEmbedding } from '@/lib/db/vector'
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const embedding = await db.bookmarkEmbedding.findUnique({
-    where: { bookmarkId: params.id },
-  })
+  try {
+    const { id } = await params
+    const embedding = await getBookmarkEmbedding(id)
 
-  if (!embedding || !embedding.embedding) {
+    if (!embedding) {
+      return NextResponse.json([])
+    }
+
+    const similar = await findSimilarBookmarks(embedding, 5, id)
+
+    if (!similar.length) {
+      return NextResponse.json([])
+    }
+
+    const bookmarks = await db.bookmark.findMany({
+      where: { id: { in: similar.map((s) => s.bookmarkId) } },
+      include: { tags: { include: { tag: true } } },
+    })
+
+    return NextResponse.json(
+      bookmarks.map((b) => ({
+        id: b.id,
+        title: b.title,
+        url: b.url,
+        tags: b.tags.map((bt) => bt.tag.name),
+      }))
+    )
+  } catch {
     return NextResponse.json([])
   }
-
-  const similar = await findSimilarBookmarks(
-    embedding.embedding as unknown as number[],
-    5,
-    params.id
-  )
-
-  const bookmarks = await db.bookmark.findMany({
-    where: { id: { in: similar.map((s) => s.bookmarkId) } },
-    include: { tags: { include: { tag: true } } },
-  })
-
-  return NextResponse.json(bookmarks)
 }
