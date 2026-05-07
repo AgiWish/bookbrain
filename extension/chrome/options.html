@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BookBrain 设置</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="panel">
+        <header>
+          <h1>BookBrain Clipper</h1>
+          <p>配置插件访问码，用于一键保存和搜索收藏。</p>
+        </header>
+
+        <form id="settingsForm" class="form">
+          <label>
+            <span>BookBrain 地址</span>
+            <input id="baseUrl" name="baseUrl" type="url" required placeholder="https://book.agiwish.com" />
+          </label>
+
+          <label>
+            <span>插件访问码</span>
+            <input id="extensionToken" name="extensionToken" type="password" required autocomplete="off" placeholder="在服务器 .env 中配置" />
+          </label>
+
+          <label class="checkbox">
+            <input id="defaultPinned" name="defaultPinned" type="checkbox" />
+            <span>保存时默认加入常用收藏</span>
+          </label>
+
+          <div class="actions">
+            <button id="testButton" class="secondary" type="button">测试连接</button>
+            <button class="primary" type="submit">保存设置</button>
+          </div>
+        </form>
+
+        <p id="status" class="status" role="status"></p>
+      </section>
+    </main>
+
+    <script src="shared.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

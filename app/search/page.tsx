@@ -36,14 +36,15 @@ export default function SearchPage() {
     const start = performance.now();
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&mode=${mode}`);
-      const data = await res.json();
-      setResults(data);
+      const data = await res.json() as { results: Bookmark[]; total: number };
+      setResults(Array.isArray(data.results) ? data.results : []);
       setStats({
-        count: data.length,
+        count: data.total ?? 0,
         time: Math.round(performance.now() - start),
       });
     } catch (e) {
       console.error(e);
+      setResults([]);
     } finally {
       setLoading(false);
     }
@@ -58,34 +59,34 @@ export default function SearchPage() {
   }, [query, handleSearch]);
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#0F1117" }}>
+    <div className="flex-1 flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#f3f7fc" }}>
       <div className="max-w-5xl mx-auto w-full px-6 pt-12 pb-8 flex flex-col gap-8">
         {/* Search Header */}
         <div className="space-y-6">
-          <SearchBar 
-            value={query} 
-            onChange={setQuery} 
-            onSearch={() => handleSearch(query)} 
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            onSearch={() => handleSearch(query)}
             placeholder="用自然语言搜索，例如：Spring Boot 部署教程"
           />
 
           <div className="flex items-center justify-between">
             {/* Mode Switcher */}
-            <div className="flex p-1 rounded-xl bg-[#1A1D27] border border-[#2E3347]">
-              <ModeButton 
-                active={mode === "keyword"} 
+            <div className="flex p-1 rounded-xl bg-white border border-[#e6edf5]">
+              <ModeButton
+                active={mode === "keyword"}
                 onClick={() => setMode("keyword")}
               >
                 关键词
               </ModeButton>
-              <ModeButton 
-                active={mode === "semantic"} 
+              <ModeButton
+                active={mode === "semantic"}
                 onClick={() => setMode("semantic")}
               >
                 语义
               </ModeButton>
-              <ModeButton 
-                active={mode === "hybrid"} 
+              <ModeButton
+                active={mode === "hybrid"}
                 onClick={() => setMode("hybrid")}
               >
                 混合
@@ -94,7 +95,7 @@ export default function SearchPage() {
 
             {/* Stats */}
             {query && !loading && (
-              <p className="text-xs text-[#9099B5]">
+              <p className="text-xs text-[#98a2b3]">
                 找到 {stats.count} 条结果，耗时 {stats.time}ms
               </p>
             )}
@@ -106,28 +107,30 @@ export default function SearchPage() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-40 rounded-xl bg-[#1A1D27] animate-pulse border border-[#2E3347]" />
+                <div key={i} className="h-40 rounded-xl bg-white animate-pulse border border-[#e6edf5]" />
               ))}
             </div>
           ) : results.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {results.map((bookmark: Bookmark) => (
-                <BookmarkCard 
-                  key={bookmark.id} 
-                  bookmark={bookmark} 
-                  onClick={setSelectedId} 
+                <BookmarkCard
+                  key={bookmark.id}
+                  bookmark={bookmark}
+                  onClick={setSelectedId}
                 />
               ))}
             </div>
           ) : query ? (
             <div className="py-20 text-center space-y-2">
-              <p className="text-[#E8EAF0] font-medium">未找到匹配项</p>
-              <p className="text-sm text-[#9099B5]">尝试切换搜索模式或使用更通用的词汇</p>
+              <p className="text-[#1f2937] font-medium">未找到匹配项</p>
+              <p className="text-sm text-[#98a2b3]">尝试切换搜索模式或使用更通用的词汇</p>
             </div>
           ) : (
             <div className="py-20 text-center space-y-4 opacity-50">
-              <span className="text-6xl block">🧠</span>
-              <p className="text-[#9099B5]">输入内容开始探索您的知识库</p>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#98a2b3" strokeWidth="1" className="mx-auto">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <p className="text-[#98a2b3]">输入内容开始探索您的知识库</p>
             </div>
           )}
         </div>
@@ -143,9 +146,9 @@ function ModeButton({ active, onClick, children }: { active: boolean, onClick: (
     <button
       onClick={onClick}
       className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
-        active 
-          ? "bg-[#4F8EF7] text-white shadow-lg" 
-          : "text-[#9099B5] hover:text-[#E8EAF0]"
+        active
+          ? "bg-[#2f96d4] text-white shadow-sm"
+          : "text-[#98a2b3] hover:text-[#1f2937]"
       }`}
     >
       {children}

@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider   = "postgresql"
-  url        = env("DATABASE_URL")
   extensions = [vector]
 }
 
@@ -16,6 +15,9 @@ model Bookmark {
   description    String?
   faviconUrl     String?
   folder         String?
+  category       String?
+  subfolder      String?
+  pinned         Boolean   @default(false)
   source         String    @default("chrome") // "chrome" | "tabbit"
   addDate        DateTime?
   importedAt     DateTime  @default(now())

@@ -1,0 +1,150 @@
+const form = document.getElementById("bookmarkForm");
+const titleEl = document.getElementById("title");
+const urlEl = document.getElementById("url");
+const pinnedInput = document.getElementById("pinned");
+const saveButton = document.getElementById("saveButton");
+const statusEl = document.getElementById("status");
+const setupNotice = document.getElementById("setupNotice");
+const openOptionsButton = document.getElementById("openOptions");
+const pageHint = document.getElementById("pageHint");
+const searchInput = document.getElementById("searchInput");
+const searchResults = document.getElementById("searchResults");
+
+let currentTab = null;
+let searchTimer = null;
+
+function setStatus(message, type = "") {
+  statusEl.textContent = message;
+  statusEl.className = `status ${type}`.trim();
+}
+
+async function getActiveTab() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  return tab;
+}
+
+function setSaving(isSaving, label = "保存中...") {
+  saveButton.disabled = isSaving;
+  saveButton.textContent = isSaving ? label : "保存当前网页";
+}
+
+async function loadInitialState() {
+  const [settings, tab] = await Promise.all([bookbrainGetSettings(), getActiveTab()]);
+  currentTab = tab;
+
+  if (!settings.baseUrl || !settings.extensionToken) {
+    setupNotice.classList.remove("hidden");
+  }
+
+  pinnedInput.checked = settings.defaultPinned;
+
+  if (!tab?.url || bookbrainIsUnsupportedUrl(tab.url)) {
+    titleEl.textContent = "当前页面不可收藏";
+    urlEl.textContent = "";
+    pageHint.textContent = "当前页面不可收藏";
+    saveButton.disabled = true;
+    setStatus("请切换到普通网页后再保存。", "error");
+    return;
+  }
+
+  titleEl.textContent = tab.title || "未命名网页";
+  urlEl.textContent = tab.url;
+  pageHint.textContent = (() => {
+    try {
+      return new URL(tab.url).hostname.replace(/^www\./, "");
+    } catch {
+      return "保存当前网页";
+    }
+  })();
+}
+
+async function submitBookmark(event) {
+  event.preventDefault();
+  setSaving(true);
+  setStatus("");
+
+  try {
+    const result = await bookbrainSaveBookmark({
+      title: currentTab?.title || titleEl.textContent,
+      url: currentTab?.url || urlEl.textContent,
+      pinned: pinnedInput.checked,
+    });
+
+    const bookmark = result.bookmark;
+    const location = [bookmark?.category, bookmark?.subfolder].filter(Boolean).join(" / ");
+    setStatus(
+      location ? `已保存到 ${location}` : result.message,
+      result.status === "created" ? "success" : "error"
+    );
+  } catch (error) {
+    setStatus(error instanceof Error ? error.message : "保存失败。", "error");
+  } finally {
+    setSaving(false);
+  }
+}
+
+function hostOf(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function renderSearchResults(results) {
+  searchResults.innerHTML = "";
+  if (!searchInput.value.trim()) return;
+  if (results.length === 0) {
+    searchResults.innerHTML = '<p class="empty">没有找到相关收藏</p>';
+    return;
+  }
+
+  for (const item of results.slice(0, 8)) {
+    const button = document.createElement("button");
+    button.className = "result-item";
+    button.type = "button";
+    button.innerHTML = `
+      <span class="result-title"></span>
+      <span class="result-meta"></span>
+    `;
+    button.querySelector(".result-title").textContent = item.title || item.url;
+    button.querySelector(".result-meta").textContent = [
+      hostOf(item.url),
+      [item.category, item.subfolder].filter(Boolean).join(" / "),
+      (item.tags || []).slice(0, 2).join(", "),
+    ].filter(Boolean).join(" · ");
+    button.addEventListener("click", () => {
+      chrome.tabs.create({ url: item.url });
+    });
+    searchResults.appendChild(button);
+  }
+}
+
+async function runSearch() {
+  const query = searchInput.value.trim();
+  if (!query) {
+    searchResults.innerHTML = "";
+    return;
+  }
+
+  searchResults.innerHTML = '<p class="empty">搜索中...</p>';
+  try {
+    const data = await bookbrainSearchBookmarks(query);
+    renderSearchResults(data.results);
+  } catch (error) {
+    searchResults.innerHTML = `<p class="empty error">${error instanceof Error ? error.message : "搜索失败"}</p>`;
+  }
+}
+
+openOptionsButton.addEventListener("click", () => {
+  chrome.runtime.openOptionsPage();
+});
+
+form.addEventListener("submit", submitBookmark);
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(runSearch, 300);
+});
+loadInitialState().catch((error) => {
+  setStatus(error instanceof Error ? error.message : "初始化失败。", "error");
+});

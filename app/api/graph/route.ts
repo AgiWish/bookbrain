@@ -15,12 +15,12 @@ export async function GET(request: NextRequest) {
     id: b.id,
     title: b.title,
     url: b.url,
-    tags: b.tags.map((bt) => bt.tag.name),
-    group: b.tags[0]?.tag.name ?? 'other',
+    tag: b.tags[0]?.tag.name ?? 'other',
+    val: Math.max(1, b.tags.length),
   }))
 
   // Simple edges: connect bookmarks sharing same tags
-  const edges: Array<{ source: string; target: string; similarity: number }> = []
+  const links: Array<{ source: string; target: string; similarity: number }> = []
   const tagToBookmarks = new Map<string, string[]>()
 
   for (const b of bookmarks) {
@@ -32,12 +32,12 @@ export async function GET(request: NextRequest) {
   }
 
   for (const [, ids] of tagToBookmarks) {
-    for (let i = 0; i < ids.length - 1 && edges.length < 500; i++) {
-      for (let j = i + 1; j < ids.length && edges.length < 500; j++) {
-        edges.push({ source: ids[i], target: ids[j], similarity: 0.8 })
+    for (let i = 0; i < ids.length - 1 && links.length < 500; i++) {
+      for (let j = i + 1; j < ids.length && links.length < 500; j++) {
+        links.push({ source: ids[i], target: ids[j], similarity: 0.8 })
       }
     }
   }
 
-  return NextResponse.json({ nodes, edges })
+  return NextResponse.json({ nodes, links })
 }

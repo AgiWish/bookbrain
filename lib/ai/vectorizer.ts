@@ -21,9 +21,9 @@ export async function vectorizeBookmark(bookmarkId: string): Promise<void> {
   const vectorStr = `[${embedding.join(',')}]`
 
   await db.$executeRaw`
-    INSERT INTO bookmark_embeddings (id, bookmark_id, embedding, created_at, updated_at)
+    INSERT INTO bookmark_embeddings (id, "bookmarkId", embedding, "createdAt", "updatedAt")
     VALUES (gen_random_uuid()::text, ${bookmarkId}, ${vectorStr}::vector, NOW(), NOW())
-    ON CONFLICT (bookmark_id)
-    DO UPDATE SET embedding = EXCLUDED.embedding, updated_at = NOW()
+    ON CONFLICT ("bookmarkId")
+    DO UPDATE SET embedding = EXCLUDED.embedding, "updatedAt" = NOW()
   `
 }

@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "BookBrain Clipper",
+  "version": "0.1.0",
+  "description": "Save the current page to BookBrain.",
+  "permissions": ["activeTab", "contextMenus", "storage"],
+  "host_permissions": [
+    "http://book.agiwish.com/*",
+    "https://book.agiwish.com/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "action": {
+    "default_title": "Save to BookBrain",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "save-current-page": {
+      "suggested_key": {
+        "default": "Alt+Shift+B",
+        "mac": "Alt+Shift+B"
+      },
+      "description": "Save current page to BookBrain"
+    }
+  },
+  "options_page": "options.html"
+}

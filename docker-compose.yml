@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: bookbrain
       POSTGRES_DB: bookbrain
     ports:
-      - "5432:5432"
+      - "${BOOKBRAIN_DB_BIND:-127.0.0.1:5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,12 +22,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BOOKBRAIN_AUTO_AI_PROCESS: ${NEXT_PUBLIC_BOOKBRAIN_AUTO_AI_PROCESS:-false}
     container_name: bookbrain-app
     ports:
-      - "3000:3000"
+      - "${BOOKBRAIN_APP_PORT:-3200}:3000"
     environment:
       DATABASE_URL: postgresql://bookbrain:bookbrain@postgres:5432/bookbrain
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      BOOKBRAIN_AUTH_USER: ${BOOKBRAIN_AUTH_USER:-admin}
+      BOOKBRAIN_AUTH_PASSWORD: ${BOOKBRAIN_AUTH_PASSWORD}
+      BOOKBRAIN_LOGIN_CODE: ${BOOKBRAIN_LOGIN_CODE}
+      BOOKBRAIN_EXTENSION_TOKEN: ${BOOKBRAIN_EXTENSION_TOKEN}
+      NEXT_PUBLIC_BOOKBRAIN_AUTO_AI_PROCESS: ${NEXT_PUBLIC_BOOKBRAIN_AUTO_AI_PROCESS:-false}
       NODE_ENV: production
     depends_on:
       postgres:

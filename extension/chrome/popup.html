@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BookBrain</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <header class="header">
+        <div>
+          <h1>BookBrain</h1>
+          <p id="pageHint">保存当前网页</p>
+        </div>
+        <button id="openOptions" class="icon-button" type="button" title="设置" aria-label="设置">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M6.8 2h2.4l.4 1.6 1.4.6 1.4-.8 1.2 2-1.2 1.1.1 1.5 1.3 1-1.2 2.1-1.6-.5-1.2.8-.4 1.6H6.8l-.4-1.6-1.2-.8-1.6.5-1.2-2.1 1.3-1 .1-1.5-1.2-1.1 1.2-2 1.4.8 1.4-.6L6.8 2Z" />
+            <circle cx="8" cy="8" r="2" />
+          </svg>
+        </button>
+      </header>
+
+      <section id="setupNotice" class="notice hidden">
+        请先配置 BookBrain 地址和插件访问码。
+      </section>
+
+      <form id="bookmarkForm" class="form">
+        <div class="current-page">
+          <div class="page-icon" aria-hidden="true">B</div>
+          <div class="page-copy">
+            <p id="title" class="page-title">当前网页</p>
+            <p id="url" class="page-url">https://example.com</p>
+          </div>
+        </div>
+
+        <label class="checkbox">
+          <input id="pinned" name="pinned" type="checkbox" />
+          <span>加入常用收藏</span>
+        </label>
+
+        <div class="actions">
+          <button id="saveButton" class="primary" type="submit">保存当前网页</button>
+        </div>
+      </form>
+
+      <p id="status" class="status" role="status"></p>
+
+      <section class="search-panel" aria-label="搜索收藏">
+        <label>
+          <span>搜索收藏</span>
+          <input id="searchInput" name="search" type="search" autocomplete="off" placeholder="语义或关键词，例如：nextjs 部署" />
+        </label>
+        <div id="searchResults" class="search-results"></div>
+      </section>
+    </main>
+
+    <script src="shared.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

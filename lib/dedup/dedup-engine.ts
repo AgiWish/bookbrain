@@ -40,5 +40,6 @@ export function generateDeduplicationReport(
     uniqueCount: unique.length,
     duplicateCount: duplicates.length,
     duplicatePairs: duplicates,
+    uniqueBookmarks: unique,
   }
 }

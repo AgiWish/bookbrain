@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     let ids = body.bookmarkIds
 
     if (!ids?.length) {
-      const unprocessed = await db.bookmark.findMany({
+      const unprocessed: Array<{ id: string }> = await db.bookmark.findMany({
         where: { aiProcessedAt: null },
         select: { id: true },
       })

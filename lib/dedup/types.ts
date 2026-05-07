@@ -10,4 +10,5 @@ export interface DeduplicationReport {
   uniqueCount: number
   duplicateCount: number
   duplicatePairs: DuplicatePair[]
+  uniqueBookmarks: RawBookmark[]
 }
