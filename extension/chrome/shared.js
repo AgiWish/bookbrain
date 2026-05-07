@@ -75,6 +75,27 @@ async function bookbrainSaveBookmark(input) {
   return { status: "created", message: "已保存到 BookBrain。", bookmark: data.bookmark };
 }
 
+async function bookbrainListPinned(limit = 30) {
+  const settings = await bookbrainGetSettings();
+  if (!settings.baseUrl || !settings.extensionToken) {
+    throw new Error("请先完成插件设置。");
+  }
+  const params = new URLSearchParams({ pinned: "true", limit: String(limit), page: "1" });
+  const response = await fetch(`${settings.baseUrl}/api/bookmarks?${params}`, {
+    headers: bookbrainAuthHeaders(settings),
+  });
+  const data = await bookbrainParseJsonResponse(response);
+  if (response.status === 401) {
+    throw new Error("插件访问码不正确，请检查设置。");
+  }
+  if (!response.ok) {
+    throw new Error(data.error || `加载常用收藏失败（${response.status}）`);
+  }
+  // The list endpoint returns { bookmarks: [...] } in current builds; older
+  // builds returned a bare array — accept either.
+  return Array.isArray(data) ? data : data.bookmarks || data.results || [];
+}
+
 async function bookbrainSearchBookmarks(query, limit = 8) {
   const settings = await bookbrainGetSettings();
   if (!settings.baseUrl || !settings.extensionToken) {
