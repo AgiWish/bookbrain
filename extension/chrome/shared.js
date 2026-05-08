@@ -29,6 +29,12 @@ function bookbrainAuthHeaders(settings) {
   };
 }
 
+function bookbrainFetchWithTimeout(url, options = {}, timeoutMs = 6000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 async function bookbrainParseJsonResponse(response) {
   const contentType = response.headers.get("content-type") || "";
   if (!contentType.includes("application/json")) {
@@ -47,7 +53,7 @@ async function bookbrainSaveBookmark(input) {
     throw new Error("当前页面不能保存。");
   }
 
-  const response = await fetch(`${settings.baseUrl}/api/bookmarks`, {
+  const response = await bookbrainFetchWithTimeout(`${settings.baseUrl}/api/bookmarks`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -59,7 +65,7 @@ async function bookbrainSaveBookmark(input) {
       autoClassify: true,
       pinned: input.pinned ?? settings.defaultPinned,
     }),
-  });
+  }, 12000);
 
   const data = await bookbrainParseJsonResponse(response);
   if (response.status === 409) {
@@ -81,9 +87,9 @@ async function bookbrainListPinned(limit = 30) {
     throw new Error("请先完成插件设置。");
   }
   const params = new URLSearchParams({ pinned: "true", limit: String(limit), page: "1" });
-  const response = await fetch(`${settings.baseUrl}/api/bookmarks?${params}`, {
+  const response = await bookbrainFetchWithTimeout(`${settings.baseUrl}/api/bookmarks?${params}`, {
     headers: bookbrainAuthHeaders(settings),
-  });
+  }, 6000);
   const data = await bookbrainParseJsonResponse(response);
   if (response.status === 401) {
     throw new Error("插件访问码不正确，请检查设置。");
@@ -105,9 +111,9 @@ async function bookbrainSearchBookmarks(query, limit = 8) {
   if (!q) return { results: [], total: 0 };
 
   const params = new URLSearchParams({ q, mode: "hybrid", limit: String(limit) });
-  const response = await fetch(`${settings.baseUrl}/api/search?${params}`, {
+  const response = await bookbrainFetchWithTimeout(`${settings.baseUrl}/api/search?${params}`, {
     headers: bookbrainAuthHeaders(settings),
-  });
+  }, 6000);
   const data = await bookbrainParseJsonResponse(response);
   if (response.status === 401) {
     throw new Error("插件访问码不正确，请检查设置。");

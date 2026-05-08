@@ -182,20 +182,28 @@ function renderPinnedList(items) {
   }
 }
 
+const PINNED_FRESH_MS = 10 * 60 * 1000; // skip network if cache is younger than 10 min
+
 async function loadPinned({ force = false } = {}) {
-  // 1. Try the cache first for instant render — popups should feel snappy.
-  if (!force) {
-    try {
-      const cached = (await chrome.storage.local.get(PINNED_CACHE_KEY))[PINNED_CACHE_KEY];
-      if (cached?.items) renderPinnedList(cached.items);
-    } catch {
-      // ignore
-    }
-  } else {
+  // 1. Paint from cache first — this is what the user sees within 1 frame.
+  let cached = null;
+  try {
+    cached = (await chrome.storage.local.get(PINNED_CACHE_KEY))[PINNED_CACHE_KEY] || null;
+    if (cached?.items) renderPinnedList(cached.items);
+  } catch {
+    // ignore
+  }
+
+  // 2. If cache is fresh and the user didn't ask for a refresh, skip the
+  // network entirely. The background service worker keeps it warm via an
+  // hourly alarm + post-save refresh.
+  const fresh = cached?.fetchedAt && Date.now() - cached.fetchedAt < PINNED_FRESH_MS;
+  if (fresh && !force) return;
+
+  if (force) {
     pinnedList.innerHTML = '<p class="empty">刷新中...</p>';
   }
 
-  // 2. Then fetch fresh in the background and replace.
   try {
     const items = await bookbrainListPinned(30);
     renderPinnedList(items);
@@ -203,8 +211,7 @@ async function loadPinned({ force = false } = {}) {
       [PINNED_CACHE_KEY]: { items, fetchedAt: Date.now() },
     });
   } catch (error) {
-    // If the cache rendered something, keep it visible; only show the error
-    // when we have nothing to fall back on.
+    // If we already rendered cache, keep it; only show error on empty state.
     if (!pinnedList.querySelector(".pinned-item")) {
       pinnedList.innerHTML = `<p class="empty error">${error instanceof Error ? error.message : "加载失败"}</p>`;
     }
@@ -224,10 +231,19 @@ searchInput.addEventListener("input", () => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(runSearch, 300);
 });
-loadInitialState().catch((error) => {
-  setStatus(error instanceof Error ? error.message : "初始化失败。", "error");
-});
+// Defer all I/O until after first paint so the popup window animates in
+// immediately. requestAnimationFrame fires after layout, so the user sees the
+// shell instantly; the form fields and pinned list populate a frame later.
+function afterFirstPaint(fn) {
+  requestAnimationFrame(() => requestAnimationFrame(fn));
+}
 
-loadPinned().catch((error) => {
-  console.warn("Failed to load pinned bookmarks", error);
+afterFirstPaint(() => {
+  loadInitialState().catch((error) => {
+    setStatus(error instanceof Error ? error.message : "初始化失败。", "error");
+  });
+
+  loadPinned().catch((error) => {
+    console.warn("Failed to load pinned bookmarks", error);
+  });
 });
