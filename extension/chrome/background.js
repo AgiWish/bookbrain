@@ -45,10 +45,15 @@ async function saveTab(tab) {
 }
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: CONTEXT_MENU_ID,
-    title: "保存到 BookBrain",
-    contexts: ["page", "link"],
+  // removeAll() first — without it, reloading the extension or an update
+  // throws "Cannot create item with duplicate id save-to-bookbrain"
+  // because the menu entry from the previous load is still there.
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: CONTEXT_MENU_ID,
+      title: "保存到 BookBrain",
+      contexts: ["page", "link"],
+    });
   });
   refreshPinnedCache();
 });
